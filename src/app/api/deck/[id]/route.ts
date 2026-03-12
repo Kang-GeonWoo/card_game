@@ -3,7 +3,12 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../../lib/authOptions';
 import prisma from '../../../../lib/prisma';
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    // Next.js 15부터 params가 Promise로 변경되어 await이 필수
+    const { id } = await params;
     try {
         const session = await getServerSession(authOptions);
         if (!session?.user?.email) {
@@ -19,7 +24,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
         // 덱 소유자 확인
         const existingDeck = await prisma.deck.findUnique({
-            where: { id: params.id },
+            where: { id },
             include: { user: true }
         });
 
@@ -32,7 +37,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         }
 
         const updatedDeck = await prisma.deck.update({
-            where: { id: params.id },
+            where: { id },
             data: { name, character, cards }
         });
 
@@ -43,7 +48,12 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    // Next.js 15부터 params가 Promise로 변경되어 await이 필수
+    const { id } = await params;
     try {
         const session = await getServerSession(authOptions);
         if (!session?.user?.email) {
@@ -51,7 +61,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
         }
 
         const existingDeck = await prisma.deck.findUnique({
-            where: { id: params.id },
+            where: { id },
             include: { user: true }
         });
 
@@ -64,7 +74,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
         }
 
         await prisma.deck.delete({
-            where: { id: params.id }
+            where: { id }
         });
 
         return NextResponse.json({ message: 'Deck deleted successfully' }, { status: 200 });
