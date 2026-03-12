@@ -1,0 +1,873 @@
+{
+  "cards": [
+    {
+      "id": "defense",
+      "name": "방어",
+      "type": "support",
+      "scope": "common",
+      "cost": 0,
+      "damage": null,
+      "targeting": {
+        "type": "none",
+        "cast_range": 0,
+        "aoe": 0
+      },
+      "effect": "[보조]\n효과: 이번 턴 동안 받는 모든 피해를 무효화합니다.",
+      "logic_detail": "시스템 최우선 순위로 발동. 해당 턴 내 모든 피격 데미지 0 처리.",
+      "priority": 2,
+      "max_count": 3,
+      "ui": {
+        "frame": "support_frame.jpg",
+        "illustration": "defense.jpg",
+        "cost_icon": "support_frame_cost_circle.jpg"
+      },
+      "effects": [
+        {
+          "type": "add_shield",
+          "value": 999
+        }
+      ]
+    },
+    {
+      "id": "purify",
+      "name": "정화",
+      "type": "support",
+      "scope": "common",
+      "cost": 50,
+      "damage": null,
+      "targeting": {
+        "type": "none",
+        "cast_range": 0,
+        "aoe": 0
+      },
+      "effect": "[보조]\n효과: 시전자에게 걸린 모든 상태이상을 해제합니다.",
+      "logic_detail": "시스템 최하위 순위로 발동. 시전자의 모든 디버프 배열 초기화.",
+      "priority": -2,
+      "max_count": 2,
+      "ui": {
+        "frame": "support_frame.jpg",
+        "illustration": "purify.jpg",
+        "cost_icon": "support_frame_cost_circle.jpg"
+      },
+      "effects": [
+        {
+          "type": "purify"
+        }
+      ]
+    },
+    {
+      "id": "heal",
+      "name": "치료",
+      "type": "support",
+      "scope": "common",
+      "cost": 10,
+      "damage": null,
+      "targeting": {
+        "type": "none",
+        "cast_range": 0,
+        "aoe": 0
+      },
+      "effect": "[보조]\n효과: 시전자의 체력을 10 회복합니다.",
+      "logic_detail": "시전자 현재 HP에 +10 처리.",
+      "priority": 0,
+      "max_count": 1,
+      "ui": {
+        "frame": "support_frame.jpg",
+        "illustration": "heal.jpg",
+        "cost_icon": "support_frame_cost_circle.jpg"
+      },
+      "effects": [
+        {
+          "type": "heal",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "id": "shield",
+      "name": "방패",
+      "type": "support",
+      "scope": "common",
+      "cost": 20,
+      "damage": null,
+      "targeting": {
+        "type": "none",
+        "cast_range": 0,
+        "aoe": 0
+      },
+      "effect": "[보조]\n효과: 방어도를 5 얻습니다. 방어도는 체력보다 먼저 깎입니다.",
+      "logic_detail": "방어도 5 추가. 데미지 계산 시 HP보다 우선 소모.",
+      "priority": 0,
+      "max_count": 3,
+      "ui": {
+        "frame": "support_frame.jpg",
+        "illustration": "shield.jpg",
+        "cost_icon": "support_frame_cost_circle.jpg"
+      },
+      "effects": [
+        {
+          "type": "add_shield",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "id": "meditation",
+      "name": "명상",
+      "type": "support",
+      "scope": "common",
+      "cost": 0,
+      "damage": null,
+      "targeting": {
+        "type": "none",
+        "cast_range": 0,
+        "aoe": 0
+      },
+      "effect": "[보조]\n효과: 기력을 30 회복합니다.",
+      "logic_detail": "시전자 현재 기력에 +30 추가.",
+      "priority": 0,
+      "max_count": 2,
+      "ui": {
+        "frame": "support_frame.jpg",
+        "illustration": "meditation.jpg",
+        "cost_icon": "support_frame_cost_circle.jpg"
+      },
+      "effects": [
+        {
+          "type": "restore_energy",
+          "value": 30
+        }
+      ]
+    },
+    {
+      "id": "draw",
+      "name": "드로우",
+      "type": "support",
+      "scope": "common",
+      "cost": 20,
+      "damage": null,
+      "targeting": {
+        "type": "none",
+        "cast_range": 0,
+        "aoe": 0
+      },
+      "effect": "[보조]\n효과: 카드 2장을 덱에서 뽑습니다.",
+      "logic_detail": "덱에서 상위 2장의 카드를 핸드로 이동.",
+      "priority": 0,
+      "max_count": 3,
+      "ui": {
+        "frame": "support_frame.jpg",
+        "illustration": "draw.jpg",
+        "cost_icon": "support_frame_cost_circle.jpg"
+      },
+      "effects": [
+        {
+          "type": "draw",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "poison_cloud",
+      "name": "독구름",
+      "type": "magic",
+      "scope": "common",
+      "cost": 30,
+      "damage": null,
+      "targeting": {
+        "type": "global",
+        "cast_range": 99,
+        "aoe": 99
+      },
+      "effect": "[전체 공격]\n효과: 적 전체에게 독 중첩을 1스택 쌓습니다.",
+      "logic_detail": "모든 상대 타겟의 상태이상 리스트에 '독' 추가.",
+      "priority": 0,
+      "max_count": 2,
+      "ui": {
+        "frame": "magic_frame.jpg",
+        "illustration": "poison_cloud.jpg",
+        "cost_icon": "magic_frame_cost_circle.jpg"
+      },
+      "effects": [
+        {
+          "type": "add_status",
+          "statusId": "poison",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "fire_play",
+      "name": "불장난",
+      "type": "magic",
+      "scope": "common",
+      "cost": 30,
+      "damage": null,
+      "targeting": {
+        "type": "global",
+        "cast_range": 99,
+        "aoe": 99
+      },
+      "effect": "[전체 공격]\n효과: 적 전체에게 화상 중첩을 1스택 쌓습니다.",
+      "logic_detail": "모든 상대 타겟의 상태이상 리스트에 '화상' 추가.",
+      "priority": 0,
+      "max_count": 2,
+      "ui": {
+        "frame": "magic_frame.jpg",
+        "illustration": "fire_play.jpg",
+        "cost_icon": "magic_frame_cost_circle.jpg"
+      },
+      "effects": [
+        {
+          "type": "add_status",
+          "statusId": "burn",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "ice_fog",
+      "name": "얼음안개",
+      "type": "magic",
+      "scope": "common",
+      "cost": 30,
+      "damage": null,
+      "targeting": {
+        "type": "global",
+        "cast_range": 99,
+        "aoe": 99
+      },
+      "effect": "[전체 공격]\n효과: 적 전체에게 빙결(얼음) 중첩을 1스택 쌓습니다.",
+      "logic_detail": "모든 상대 타겟의 상태이상 리스트에 '얼음' 추가.",
+      "priority": 0,
+      "max_count": 2,
+      "ui": {
+        "frame": "magic_frame.jpg",
+        "illustration": "ice_fog.jpg",
+        "cost_icon": "magic_frame_cost_circle.jpg"
+      },
+      "effects": [
+        {
+          "type": "add_status",
+          "statusId": "chill",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "poison_needle",
+      "name": "독침",
+      "type": "magic",
+      "scope": "common",
+      "cost": 10,
+      "damage": 5,
+      "targeting": {
+        "type": "tile",
+        "cast_range": 99,
+        "aoe": 0
+      },
+      "effect": "[단일 공격] 데미지: 5\n효과: 명중 시 상대에게 독 중첩을 1스택 부여합니다.",
+      "logic_detail": "지정한 타일에 5 데미지 및 '독' 1중첩 부여.",
+      "priority": 0,
+      "max_count": 3,
+      "ui": {
+        "frame": "magic_frame.jpg",
+        "illustration": "poison_needle.jpg",
+        "cost_icon": "magic_frame_cost_circle.jpg"
+      },
+      "effects": [
+        {
+          "type": "damage",
+          "value": 5
+        },
+        {
+          "type": "add_status",
+          "statusId": "poison",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "fire_needle",
+      "name": "불침",
+      "type": "magic",
+      "scope": "common",
+      "cost": 10,
+      "damage": 5,
+      "targeting": {
+        "type": "tile",
+        "cast_range": 99,
+        "aoe": 0
+      },
+      "effect": "[단일 공격] 데미지: 5\n효과: 명중 시 상대에게 화상 중첩을 1스택 부여합니다.",
+      "logic_detail": "지정한 타일에 5 데미지 및 '화상' 1중첩 부여.",
+      "priority": 0,
+      "max_count": 3,
+      "ui": {
+        "frame": "magic_frame.jpg",
+        "illustration": "fire_needle.jpg",
+        "cost_icon": "magic_frame_cost_circle.jpg"
+      },
+      "effects": [
+        {
+          "type": "damage",
+          "value": 5
+        },
+        {
+          "type": "add_status",
+          "statusId": "burn",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "ice_needle",
+      "name": "얼음침",
+      "type": "magic",
+      "scope": "common",
+      "cost": 10,
+      "damage": 5,
+      "targeting": {
+        "type": "tile",
+        "cast_range": 99,
+        "aoe": 0
+      },
+      "effect": "[단일 공격] 데미지: 5\n효과: 명중 시 상대에게 빙결(얼음) 중첩을 1스택 부여합니다.",
+      "logic_detail": "지정한 타일에 5 데미지 및 '얼음' 1중첩 부여.",
+      "priority": 0,
+      "max_count": 3,
+      "ui": {
+        "frame": "magic_frame.jpg",
+        "illustration": "ice_needle.jpg",
+        "cost_icon": "magic_frame_cost_circle.jpg"
+      },
+      "effects": [
+        {
+          "type": "damage",
+          "value": 5
+        },
+        {
+          "type": "add_status",
+          "statusId": "chill",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "stone_throw",
+      "name": "짱돌던지기",
+      "type": "attack",
+      "scope": "warrior",
+      "cost": 20,
+      "damage": 20,
+      "targeting": {
+        "type": "tile",
+        "cast_range": 99,
+        "aoe": 0
+      },
+      "effect": "[단일 공격] 데미지: 최대 20\n효과: 상대방과의 거리에 따라 데미지가 50%씩 감소합니다.",
+      "logic_detail": "지정한 1칸 범위에 물리 데미지 적용 (거리비례).",
+      "priority": 0,
+      "max_count": 3,
+      "ui": {
+        "frame": "attack_frame.jpg",
+        "illustration": "stone_throw.jpg",
+        "cost_icon": "attack_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "shockwave",
+      "name": "충격파",
+      "type": "attack",
+      "scope": "warrior",
+      "cost": 40,
+      "damage": 20,
+      "targeting": {
+        "type": "global",
+        "cast_range": 99,
+        "aoe": 99
+      },
+      "effect": "[전체 공격] 최대 데미지: 20\n효과: 상대방과의 거리에 따라 데미지가 50%씩 감소합니다. (같은 타일 20, 1칸 거리 10, 그 이상 5 데미지)",
+      "logic_detail": "전체 맵 공격. 거리에 따라 데미지 감소.",
+      "priority": 0,
+      "max_count": 3,
+      "ui": {
+        "frame": "attack_frame.jpg",
+        "illustration": "shockwave.jpg",
+        "cost_icon": "attack_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "strong_punch",
+      "name": "강펀치",
+      "type": "attack",
+      "scope": "warrior",
+      "cost": 0,
+      "damage": 30,
+      "targeting": {
+        "type": "tile",
+        "cast_range": 1,
+        "aoe": 0
+      },
+      "effect": "[단일 공격] 데미지: 30\n효과: 가한 피해량만큼 즉시 기력을 회복합니다. (사거리 1칸)",
+      "logic_detail": "주변 1칸 내 공격. 적중 시 가한 피해만큼 기력 회복.",
+      "priority": 0,
+      "max_count": 3,
+      "ui": {
+        "frame": "attack_frame.jpg",
+        "illustration": "strong_punch.jpg",
+        "cost_icon": "attack_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "charge",
+      "name": "돌진",
+      "type": "support",
+      "scope": "warrior",
+      "cost": 20,
+      "damage": 20,
+      "targeting": {
+        "type": "line",
+        "cast_range": 99,
+        "aoe": 0
+      },
+      "effect": "[단일 공격] 데미지: 20\n효과: 타겟팅한 일직선 타일 끝까지 강제로 내달리며, 궤적 상의 적에게 피해를 입힙니다.",
+      "logic_detail": "직선 끝까지 이동하며 경로상 적에게 20 데미지.",
+      "priority": 0,
+      "max_count": 1,
+      "ui": {
+        "frame": "support_frame.jpg",
+        "illustration": "charge.jpg",
+        "cost_icon": "support_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "telekinesis",
+      "name": "염동력",
+      "type": "attack",
+      "scope": "esper",
+      "cost": 10,
+      "damage": 10,
+      "targeting": {
+        "type": "tile",
+        "cast_range": 99,
+        "aoe": 0
+      },
+      "effect": "[단일 공격] 데미지: 10\n효과: 지정한 1칸 범위에 마법 피해를 줍니다.",
+      "logic_detail": "지정한 1칸에 10의 마법 데미지.",
+      "priority": 0,
+      "max_count": 3,
+      "ui": {
+        "frame": "magic_frame.jpg",
+        "illustration": "telekinesis.jpg",
+        "cost_icon": "magic_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "psyonic_force",
+      "name": "초염력",
+      "type": "attack",
+      "scope": "esper",
+      "cost": 30,
+      "damage": 10,
+      "targeting": {
+        "type": "tile",
+        "cast_range": 99,
+        "aoe": 1
+      },
+      "effect": "[범위 공격] 데미지: 10\n효과: 지정한 타일 및 맞닿은 주변 십자 범위에 마법 데미지를 줍니다.",
+      "logic_detail": "선택 타일 및 주변 십자 범위에 10 데미지.",
+      "priority": 0,
+      "max_count": 3,
+      "ui": {
+        "frame": "magic_frame.jpg",
+        "illustration": "psyonic_force.jpg",
+        "cost_icon": "magic_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "magnetic_control",
+      "name": "자기장조작",
+      "type": "attack",
+      "scope": "esper",
+      "cost": 10,
+      "damage": 10,
+      "targeting": {
+        "type": "global",
+        "cast_range": 99,
+        "aoe": 99
+      },
+      "effect": "[전체 공격] 데미지: 10\n효과: 적군 전원 및 자기 자신에게도 피해를 줍니다.",
+      "logic_detail": "전체 적과 시전자 본인에게 10 데미지.",
+      "priority": 0,
+      "max_count": 3,
+      "ui": {
+        "frame": "magic_frame.jpg",
+        "illustration": "magnetic_control.jpg",
+        "cost_icon": "magic_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "mana_burst",
+      "name": "마나 폭발",
+      "type": "magic",
+      "scope": "esper",
+      "cost": "all_energy",
+      "damage": null,
+      "targeting": {
+        "type": "tile",
+        "cast_range": 99,
+        "aoe": 0
+      },
+      "effect": "[단일 공격] 데미지: 보유 기력의 50%\n효과: 모든 기력을 소모하여 단일 타겟에게 폭발적인 마법 데미지를 입힙니다.",
+      "logic_detail": "기력을 0으로 초기화하고 소모량의 절반만큼 전체 피해.",
+      "priority": 0,
+      "max_count": 1,
+      "ui": {
+        "frame": "magic_frame.jpg",
+        "illustration": "mana_burst.jpg",
+        "cost_icon": "magic_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "telekinesis_manipulation",
+      "name": "염력조작",
+      "type": "attack",
+      "scope": "esper",
+      "cost": 0,
+      "damage": 10,
+      "targeting": {
+        "type": "global",
+        "cast_range": 99,
+        "aoe": 99
+      },
+      "effect": "[전체 공격] 데미지: 10\n효과: 게임 맵 전체 범위에 강력한 염력을 방출해 데미지를 줍니다.",
+      "logic_detail": "게임판 전체에 10의 데미지",
+      "priority": 0,
+      "max_count": 0,
+      "ui": {
+        "frame": "magic_frame.jpg",
+        "illustration": "esper_skill.png",
+        "cost_icon": "magic_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "arrow",
+      "name": "화살",
+      "type": "attack",
+      "scope": "archer",
+      "cost": 0,
+      "damage": 10,
+      "targeting": {
+        "type": "tile",
+        "cast_range": 99,
+        "aoe": 0
+      },
+      "effect": "[단일 공격] 데미지: 10\n효과: 현재 자신의 무기 속성에 따라 공격 부가효과가 달라집니다. (속성이 전환된 직후 첫 공격은 10 추가 뎀)",
+      "logic_detail": "기본 10 데미지. 무기 속성에 따른 추가 효과 적용.",
+      "priority": 0,
+      "max_count": 5,
+      "ui": {
+        "frame": "attack_frame.jpg",
+        "illustration": "arrow.jpg",
+        "cost_icon": "attack_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "poison_arrow",
+      "name": "독화살",
+      "type": "support",
+      "scope": "archer",
+      "cost": 20,
+      "damage": null,
+      "targeting": {
+        "type": "none",
+        "cast_range": 0,
+        "aoe": 0
+      },
+      "effect": "[보조]\n효과: 자신의 활(무기)에 독 속성을 영구 부여합니다. 이 속성은 다른 속성으로 덮어쓸 수 있습니다.",
+      "logic_detail": "시전자에게 '독 속성 무기' 버프 추가.",
+      "priority": 0,
+      "max_count": 2,
+      "ui": {
+        "frame": "support_frame.jpg",
+        "illustration": "poison_arrow.jpg",
+        "cost_icon": "support_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "fire_arrow",
+      "name": "불화살",
+      "type": "support",
+      "scope": "archer",
+      "cost": 20,
+      "damage": null,
+      "targeting": {
+        "type": "none",
+        "cast_range": 0,
+        "aoe": 0
+      },
+      "effect": "[보조]\n효과: 자신의 활(무기)에 불꽃 속성을 영구 부여합니다. 이 속성은 다른 속성으로 덮어쓸 수 있습니다.",
+      "logic_detail": "시전자에게 '불 속성 무기' 버프 추가.",
+      "priority": 0,
+      "max_count": 2,
+      "ui": {
+        "frame": "support_frame.jpg",
+        "illustration": "fire_arrow.jpg",
+        "cost_icon": "support_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "ice_arrow",
+      "name": "얼음화살",
+      "type": "support",
+      "scope": "archer",
+      "cost": 20,
+      "damage": null,
+      "targeting": {
+        "type": "none",
+        "cast_range": 0,
+        "aoe": 0
+      },
+      "effect": "[보조]\n효과: 자신의 활(무기)에 얼음 빙결 속성을 영구 부여합니다. 이 속성은 다른 속성으로 덮어쓸 수 있습니다.",
+      "logic_detail": "시전자에게 '얼음 속성 무기' 버프 추가.",
+      "priority": 0,
+      "max_count": 2,
+      "ui": {
+        "frame": "support_frame.jpg",
+        "illustration": "ice_arrow.jpg",
+        "cost_icon": "support_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "arrow_rain",
+      "name": "화살비",
+      "type": "attack",
+      "scope": "archer",
+      "cost": 50,
+      "damage": 10,
+      "targeting": {
+        "type": "global",
+        "cast_range": 99,
+        "aoe": 99
+      },
+      "effect": "[전체 공격] 데미지: 10\n효과: 맵 전체 공격. 현재 무기 속성이 묻어나가며, 속성 첫 발동 시 10의 추가 피해를 입힙니다.",
+      "logic_detail": "전체 타겟 10 데미지. 무기 버프 연산.",
+      "priority": 0,
+      "max_count": 1,
+      "ui": {
+        "frame": "attack_frame.jpg",
+        "illustration": "arrow_rain.jpg",
+        "cost_icon": "attack_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "weakness_strike",
+      "name": "약점타격",
+      "type": "attack",
+      "scope": "jumper",
+      "cost": 10,
+      "damage": 1,
+      "targeting": {
+        "type": "tile",
+        "cast_range": 99,
+        "aoe": 0
+      },
+      "effect": "[단일 공격] 데미지: 1*\n효과: 적중 시 이 전투 동안 이 카드의 데미지가 2배씩 계속 증가합니다(1, 2, 4, 8...). 이 스택 위력은 광범위 타격과 공유됩니다.",
+      "logic_detail": "스택 기반 데미지 계산 (1 * 2^스택). 명중 시 스택 +1.",
+      "priority": 0,
+      "max_count": 3,
+      "ui": {
+        "frame": "attack_frame.jpg",
+        "illustration": "weakness_strike.jpg",
+        "cost_icon": "attack_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "wide_strike",
+      "name": "광범위타격",
+      "type": "attack",
+      "scope": "jumper",
+      "cost": 40,
+      "damage": 1,
+      "targeting": {
+        "type": "global",
+        "cast_range": 99,
+        "aoe": 99
+      },
+      "effect": "[전체 공격] 데미지: 1*\n효과: 맵 전체를 타격하며 적중 시 이 전투 동안 데미지가 2배씩 증폭됩니다. 스택은 약점 타격 카드와 공유됩니다.",
+      "logic_detail": "스택 기반 데미지 계산 (1 * 2^스택). 명중 시 스택 +1.",
+      "priority": 0,
+      "max_count": 3,
+      "ui": {
+        "frame": "attack_frame.jpg",
+        "illustration": "wide_strike.jpg",
+        "cost_icon": "attack_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "blink",
+      "name": "블링크",
+      "type": "support",
+      "scope": "jumper",
+      "ability": "파괴",
+      "cost": null,
+      "damage": null,
+      "targeting": {
+        "type": "none",
+        "cast_range": 0,
+        "aoe": 0
+      },
+      "effect": "[파괴][패시브]\n(직접 사용 불가) 이 카드가 패에 들려있을 때, 받는 공격 1회를 무효화해주고 손에서 영구 삭제됩니다.",
+      "logic_detail": "패시브 카드. 핸드 소지 시 피격 1회 무효화 후 영구 삭제.",
+      "priority": 0,
+      "max_count": 0,
+      "ui": {
+        "frame": "support_frame.jpg",
+        "illustration": "blink.jpg",
+        "cost_icon": "support_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "throw_book",
+      "name": "책던지기",
+      "type": "attack",
+      "scope": "prophet",
+      "cost": 10,
+      "damage": 5,
+      "targeting": {
+        "type": "tile",
+        "cast_range": 99,
+        "aoe": 0
+      },
+      "effect": "[단일 공격] 데미지: 5\n효과: 지정한 1칸 범위에 두꺼운 책을 던져 데미지를 줍니다.",
+      "logic_detail": "지정한 1칸에 5 데미지.",
+      "priority": 0,
+      "max_count": 3,
+      "ui": {
+        "frame": "attack_frame.jpg",
+        "illustration": "throw_book.jpg",
+        "cost_icon": "attack_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "copy",
+      "name": "복제",
+      "type": "support",
+      "scope": "prophet",
+      "cost": 10,
+      "damage": null,
+      "targeting": {
+        "type": "hand",
+        "cast_range": 0,
+        "aoe": 0
+      },
+      "effect": "[보조]\n효과: 상대방의 패를 선택하여 1장 스캔하고, 내 핸드에 그 카드를 복제하여 가져옵니다.\n복제된 카드는 [파괴] 속성이 부여되어 1회 사용 후 소멸합니다.",
+      "logic_detail": "상대의 핸드 카드 중 하나로 변환. 변환된 카드에 파괴 속성 부여.",
+      "priority": 0,
+      "max_count": 3,
+      "ui": {
+        "frame": "support_frame.jpg",
+        "illustration": "copy.jpg",
+        "cost_icon": "support_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "prophecy_orb",
+      "name": "예언구슬",
+      "type": "support",
+      "scope": "prophet",
+      "cost": 30,
+      "damage": null,
+      "targeting": {
+        "type": "none",
+        "cast_range": 0,
+        "aoe": 0
+      },
+      "effect": "[보조]\n효과: 예지력을 통해 덱에서 카드 3장을 즉시 뽑아옵니다.",
+      "logic_detail": "덱에서 상위 3장의 카드를 핸드로 이동.",
+      "priority": 0,
+      "max_count": 1,
+      "ui": {
+        "frame": "support_frame.jpg",
+        "illustration": "prophecy_orb.jpg",
+        "cost_icon": "support_frame_cost_circle.jpg"
+      },
+      "effects": [
+        {
+          "type": "draw",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "prediction_LV1",
+      "name": "예언LV1",
+      "type": "support",
+      "scope": "prophet",
+      "ability": "파괴",
+      "cost": 0,
+      "damage": null,
+      "targeting": {
+        "type": "hand",
+        "cast_range": 0,
+        "aoe": 0
+      },
+      "effect": "[파괴][보조]\n효과: 상대방의 패를 선택하여 1장 스캔하여 확인합니다.",
+      "logic_detail": "상대의 핸드 카드 중 하나를 확인",
+      "priority": 0,
+      "max_count": 0,
+      "ui": {
+        "frame": "support_frame.jpg",
+        "illustration": "prophet_skill.jpg",
+        "cost_icon": "support_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "prediction_LV2",
+      "name": "예언LV2",
+      "type": "support",
+      "scope": "prophet",
+      "ability": "파괴",
+      "cost": 0,
+      "damage": null,
+      "targeting": {
+        "type": "hand",
+        "cast_range": 0,
+        "aoe": 0
+      },
+      "effect": "[파괴][보조]\n효과: 상대방의 패를 선택하여 최대 2장 스캔하여 확인합니다.",
+      "logic_detail": "상대의 핸드 카드 중 두개를 확인",
+      "priority": 0,
+      "max_count": 0,
+      "ui": {
+        "frame": "support_frame.jpg",
+        "illustration": "prophet_skill.jpg",
+        "cost_icon": "support_frame_cost_circle.jpg"
+      }
+    },
+    {
+      "id": "prediction_LV3",
+      "name": "예언LV3",
+      "type": "magic",
+      "scope": "prophet",
+      "ability": "파괴",
+      "cost": 0,
+      "damage": 999,
+      "targeting": {
+        "type": "global",
+        "cast_range": 0,
+        "aoe": 99
+      },
+      "effect": "[파괴][전체 공격]\n상대를 즉사 시킵니다.",
+      "logic_detail": "상대를 즉사시킵니다",
+      "priority": 3,
+      "max_count": 0,
+      "ui": {
+        "frame": "magic_frame.jpg",
+        "illustration": "prophet_skill.jpg",
+        "cost_icon": "magic_frame_cost_circle.jpg"
+      }
+    }
+  ]
+}

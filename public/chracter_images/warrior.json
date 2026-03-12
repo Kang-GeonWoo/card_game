@@ -1,0 +1,83 @@
+{
+  "idle": {
+    "loop": true,
+    "anchor": { "x": 0.5, "y": 0.8 },
+    "frames": [
+      { "x": 0, "y": 0, "w": 200, "h": 182 },
+      { "x": 200, "y": 0, "w": 200, "h": 182 }
+    ]
+  },
+  "walk": {
+    "loop": true,
+    "anchor": { "x": 0.5, "y": 0.8 },
+    "frames": [
+      { "x": 400, "y": 0, "w": 200, "h": 182 },
+      { "x": 600, "y": 0, "w": 200, "h": 182 }
+    ]
+  },
+  "attack_prepare": {
+    "loop": false,
+    "anchor": { "x": 0.5, "y": 0.8 },
+    "frames": [
+      { "x": 800, "y": 0, "w": 200, "h": 182 },
+      { "x": 0, "y": 182, "w": 200, "h": 182 }
+    ]
+  },
+  "attack_swing": {
+    "loop": false,
+    "anchor": { "x": 0.5, "y": 0.8 },
+    "frames": [
+      { "x": 200, "y": 182, "w": 200, "h": 182 }
+    ]
+  },
+  "attack_end": {
+    "loop": false,
+    "anchor": { "x": 0.5, "y": 0.8 },
+    "frames": [
+      { "x": 400, "y": 182, "w": 200, "h": 182 }
+    ]
+  },
+  "hit": {
+    "loop": false,
+    "anchor": { "x": 0.5, "y": 0.8 },
+    "frames": [
+      { "x": 600, "y": 182, "w": 200, "h": 182 },
+      { "x": 800, "y": 182, "w": 200, "h": 182 }
+    ]
+  },
+  "skill_cast_start": {
+    "loop": false,
+    "anchor": { "x": 0.5, "y": 0.8 },
+    "frames": [
+      { "x": 0, "y": 364, "w": 200, "h": 182 }
+    ]
+  },
+  "skill_cast_loop": {
+    "loop": true,
+    "anchor": { "x": 0.5, "y": 0.8 },
+    "frames": [
+      { "x": 200, "y": 364, "w": 200, "h": 182 }
+    ]
+  },
+  "skill_cast_end": {
+    "loop": false,
+    "anchor": { "x": 0.5, "y": 0.8 },
+    "frames": [
+      { "x": 400, "y": 364, "w": 200, "h": 182 }
+    ]
+  },
+  "death_fall": {
+    "loop": false,
+    "anchor": { "x": 0.5, "y": 0.8 },
+    "frames": [
+      { "x": 600, "y": 364, "w": 200, "h": 182 }
+    ]
+  },
+  "death_down": {
+    "loop": false,
+    "anchor": { "x": 0.5, "y": 0.8 },
+    "frames": [
+      { "x": 800, "y": 364, "w": 200, "h": 182 }
+    ]
+  }
+}

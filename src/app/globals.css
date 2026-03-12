@@ -3,25 +3,66 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  /* Dark Fantasy Color Palette - AAA guidelines (From Reference Image) */
+  --bg-dark: #1A1A1A;
+  --bg-board: #2b2b36;
+  --bg-panel: rgba(20, 20, 30, 0.85);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Parchment & Leather Theme */
+  --bg-parchment: #cbbca0;
+  --bg-leather: #2a2118;
+
+  --accent-blue: #3A8EE6;
+  --accent-blue-glow: #4FC3FF;
+  --accent-red: #D33F3F;
+  --accent-red-glow: #FF3B3B;
+  --accent-green: #4CAF50;
+  --accent-purple: #9b59b6;
+  --accent-gold: #C0A062;
+
+  --text-main: #332211;
+  /* 양피지 위 진한 갈색 텍스트 */
+  --text-muted: #554433;
+  --border-subtle: rgba(255, 255, 255, 0.15);
+  --metal-frame: linear-gradient(180deg, #5a5a5a 0%, #2a2a2a 100%);
+  --metal-border: #1a1a1a;
+
+  --hud-frame: linear-gradient(180deg, #3d3024 0%, #241b12 100%);
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
+  color: var(--text-main);
+  background: var(--bg-dark);
   font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  /* overflow: hidden; (로비 스크롤 문제로 제거, 게임화면에 개별 적용) */
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+/* 폰트 유틸리티 클래스 (Serif 제목용) */
+.font-fantasy {
+  font-family: 'Georgia', serif;
+  /* 향후 웹폰트로 교체 가능 */
+}
+
+/* 스크롤바 숨김 처리 */
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes pulse-red {
+  0% { filter: drop-shadow(0 0 2px rgba(255,0,0,0.5)); transform: scale(1); }
+  50% { filter: drop-shadow(0 0 15px rgba(255,0,0,0.9)); transform: scale(1.03); }
+  100% { filter: drop-shadow(0 0 2px rgba(255,0,0,0.5)); transform: scale(1); }
+}
+
+@keyframes vignette-fade {
+  0% { opacity: 0.15; }
+  50% { opacity: 0.25; }
+  100% { opacity: 0.15; }
 }

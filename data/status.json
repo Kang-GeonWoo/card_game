@@ -1,0 +1,106 @@
+{
+  "status_effects": {
+    "poison": {
+      "name": "독",
+      "trigger": "on_turn_end",
+      "effect": "base_damage: 5, incremental_damage: 5",
+      "duration_logic": "stack_decreases_after_damage",
+      "reset_logic": "on_stack_zero"
+    },
+    "burn": {
+      "name": "화상",
+      "trigger": "on_deal_damage",
+      "effect": "damage_multiplier: 0.5",
+      "duration_logic": "stack_decreases_on_turn_end"
+    },
+    "chill": {
+      "name": "추위",
+      "trigger": "none",
+      "effect": "none",
+      "duration_logic": "permanent"
+    },
+    "freeze": {
+      "name": "얼음",
+      "trigger": "on_action_phase_start",
+      "effect": "skip_action: 1",
+      "duration_logic": "stack_decreases_on_turn_end"
+    },
+    "bleed": {
+      "name": "출혈",
+      "trigger": "on_turn_end",
+      "effect": "fixed_damage: 10",
+      "duration_logic": "stack_decreases_on_turn_end"
+    },
+    "electrocute": {
+      "name": "감전",
+      "trigger": "on_move",
+      "effect": "damage: 10",
+      "duration_logic": "stack_decreases_per_move"
+    },
+    "silence": {
+      "name": "침묵",
+      "trigger": "on_card_use",
+      "effect": "disable_categories: ['support', 'magic']",
+      "duration_logic": "stack_decreases_on_turn_end"
+    },
+    "root": {
+      "name": "속박",
+      "trigger": "on_move_attempt",
+      "effect": "disable_move: true",
+      "duration_logic": "stack_decreases_on_turn_end"
+    },
+    "vulnerable": {
+      "name": "취약",
+      "trigger": "on_take_damage",
+      "effect": "damage_received_multiplier: 2.0",
+      "duration_logic": "stack_decreases_on_turn_end"
+    },
+    "strengthen": {
+      "name": "강화",
+      "trigger": "on_deal_damage",
+      "effect": "damage_dealt_multiplier: 2.0",
+      "duration_logic": "stack_decreases_on_turn_end"
+    },
+    "weapon_poison": {
+      "name": "독 무기",
+      "trigger": "none",
+      "effect": "adds_poison_on_hit",
+      "duration_logic": "permanent"
+    },
+    "weapon_fire": {
+      "name": "불 무기",
+      "trigger": "none",
+      "effect": "adds_burn_on_hit",
+      "duration_logic": "permanent"
+    },
+    "weapon_ice": {
+      "name": "얼음 무기",
+      "trigger": "none",
+      "effect": "adds_chill_on_hit",
+      "duration_logic": "permanent"
+    },
+    "weapon_bonus": {
+      "name": "속성 변경 보너스",
+      "trigger": "none",
+      "effect": "next_attack_bonus_10",
+      "duration_logic": "permanent"
+    }
+  },
+  "complex_stack_rules": {
+    "mixed_stacks": {
+      "condition": "3_different_stacks_active (exclude_strengthen)",
+      "trigger": "on_turn_end",
+      "effect": "discard_random_card_without_using"
+    },
+    "explosion": {
+      "condition": "burn && poison",
+      "trigger": "instant",
+      "effect": "fixed_damage: 30, consume_stacks: {burn: 1, poison: 1}"
+    },
+    "stun": {
+      "condition": "freeze && electrocute",
+      "trigger": "instant",
+      "effect": "next_turn_skip, consume_stacks: {freeze: 1, electrocute: 1}"
+    }
+  }
+}

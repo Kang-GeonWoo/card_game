@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "lib": ["esnext"],
+    "types": ["node"]
+  },
+  "include": ["src/server/**/*.ts", "src/types/**/*.ts", "src/engine/dataLoader.ts"],
+  "exclude": ["node_modules"]
+}

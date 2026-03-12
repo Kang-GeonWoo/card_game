@@ -1,0 +1,69 @@
+{
+  "character_skills": {
+    "warrior": {
+      "class_name": "전사",
+      "skill_id": "strong_impact",
+      "skill_name": "강타",
+      "levels": {
+        "1": { "damage": 30, "trigger": "on_collision", "limit": "once_per_turn", "note": "이동 중 상대와 위치 겹칠 시 즉시 발동" },
+        "2": { "damage": 40, "trigger": "on_collision", "limit": "once_per_turn" },
+        "3": { "damage": 50, "trigger": "on_collision", "limit": "once_per_turn" }
+      }
+    },
+    "esper": {
+      "class_name": "에스퍼",
+      "skill_id": "psychic_control",
+      "skill_name": "염력조작",
+      "levels": {
+        "1": { "draw_count_override": 2, "trigger": "on_draw_action", "note": "기본 드로우 1장을 2장으로 대체" },
+        "2": { "draw_count_override": 5, "trigger": "on_draw_action" },
+        "3": { 
+          "draw_count_override": 5, 
+          "transform_rule": { "target_type": "attack_card", "new_card_id": "psychic_blast" },
+          "new_card_effect": { "range": "global", "damage": 10 },
+          "note": "드로우되는 모든 공격카드를 '염력조작' 카드로 변환"
+        }
+      }
+    },
+    "archer": {
+      "class_name": "궁수",
+      "skill_id": "rapid_fire",
+      "skill_name": "연속사격",
+      "levels": {
+        "1": { "extra_attacks": 1, "multiplier": 0.5, "trigger": "on_hit", "note": "명중 시 0.5배 데미지로 1회 추가 공격 (효과 중첩 가능)" },
+        "2": { "extra_attacks": 2, "multiplier": 0.5, "trigger": "on_hit" },
+        "3": { "extra_attacks": 3, "multiplier": 0.5, "trigger": "on_hit" }
+      }
+    },
+    "jumper": {
+      "class_name": "점퍼",
+      "skill_id": "blink_mastery",
+      "skill_name": "블링크",
+      "levels": {
+        "1": { "replace_action": "move", "move_type": "teleport", "range": "anywhere", "note": "기본 이동을 전 맵 텔레포트로 대체" },
+        "2": { 
+          "replace_action": "move", "move_type": "teleport", "range": "anywhere",
+          "path_damage": 5, "note": "텔레포트 경로상의 적에게 데미지 5 부여"
+        },
+        "3": { 
+          "replace_action": "move", "move_type": "teleport", "range": "anywhere",
+          "path_damage": 10, "gain_card_per_turn": "blink_card", "note": "경로 데미지 10 및 매턴 블링크 카드 획득"
+        }
+      }
+    },
+    "prophet": {
+      "class_name": "예언가",
+      "skill_id": "prophecy",
+      "skill_name": "예언",
+      "levels": {
+        "1": { "gain_card_per_turn": "prophecy_lv1", "effect": "peek_opponent_hand", "count": 1, "note": "상대 카드 1장 확인 카드 획득" },
+        "2": { "gain_card_per_turn": "prophecy_lv2", "effect": "peek_opponent_hand", "count": 2 },
+        "3": { "gain_card_per_turn": "prophecy_lv3", "effect": "instant_kill", "note": "상대를 즉사시키는 카드 획득" }
+      }
+    }
+  },
+  "upgrade_condition": {
+    "trigger_event": "deck_shuffle_event",
+    "max_level": 3
+  }
+}
