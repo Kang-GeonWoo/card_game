@@ -12,6 +12,7 @@ model User {
   email     String   @unique
   password  String
   name      String
+  rankScore Int      @default(1000) // 💡 랭크 점수 (기본 1000점 = 브론즈 시작)
   createdAt DateTime @default(now())
   decks     Deck[]
 }

@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import { Container, Title, Tabs, Grid, Card as MantineCard, Badge, Button, ScrollArea, Group, Text, Progress, Stack, Flex, Center, Loader, Modal, TextInput, ActionIcon } from '@mantine/core';
-import { Trash2, Edit2, Play } from 'lucide-react';
+import { useSession, signOut } from 'next-auth/react';
+import { Container, Title, Tabs, Grid, Card as MantineCard, Badge, Button, ScrollArea, Group, Text, Progress, Stack, Flex, Center, Loader, Modal, TextInput, ActionIcon, Divider } from '@mantine/core';
+import { Trash2, Edit2, Play, LogOut } from 'lucide-react';
 import { useGameStore } from '../engine/store';
 import { SoundEngine } from '../engine/soundEngine';
 import { useSocket } from '../components/SocketProvider';
@@ -49,6 +49,10 @@ export default function LobbyScreen() {
   // 소켓 및 매칭 상태
   const socket = useSocket();
   const [isMatching, setIsMatching] = useState(false);
+  // 💡 친선전 방 코드 상태
+  const [roomCode, setRoomCode] = useState('');
+  // 💡 랭크 점수 상태 (기본값 1000)
+  const [rankScore, setRankScore] = useState<number>(1000);
 
   // 미인증 라우팅
   useEffect(() => {
@@ -73,6 +77,11 @@ export default function LobbyScreen() {
   useEffect(() => {
       if (status === 'authenticated') {
           fetchDecks();
+          // 💡 로그인 완료 시 랭크 점수 조회
+          fetch('/api/user/me')
+              .then(res => res.json())
+              .then(data => setRankScore(data?.rankScore ?? 1000))
+              .catch(() => {}); // 조회 실패해도 기본값 유지
       }
   }, [status]);
 
@@ -145,6 +154,14 @@ export default function LobbyScreen() {
     SoundEngine.play('ui_turn_ready');
     setIsMatching(true);
     socket.emit('MATCH_FIND', { charId: selectedChar, deck });
+  };
+
+  // 💡 매칭 취소 - 대기 중 버튼 클릭 시 서버 큐에서 제거
+  const handleCancelMatch = () => {
+    socket?.emit('CANCEL_MATCH');
+    setIsMatching(false);
+    SoundEngine.play('action_discard');
+    console.log('[Lobby] 매칭 취소 요청 발송');
   };
 
   // 덱 저장 (POST or PUT)
@@ -237,7 +254,27 @@ export default function LobbyScreen() {
   return (
     <Container size="xl" py="xl">
       <Flex direction="column" gap="xl">
-        <Title order={1} c="blue.4" ta="center" style={{ letterSpacing: '4px' }}>DECK BUILDER LOBBY</Title>
+        {/* 상단 헤더: 타이틀 + 랭크 점수 + 로그아웃 버튼 */}
+        <Group justify="space-between" align="center">
+          <div>
+            <Title order={1} c="blue.4" style={{ letterSpacing: '4px' }}>DECK BUILDER LOBBY</Title>
+            {/* 💡 랭크 점수 배지 */}
+            <Badge size="xl" color="yellow" variant="dot" mt={4}>내 랭크 점수: {rankScore} PT</Badge>
+          </div>
+          <Group gap="sm">
+            <Text size="sm" c="dimmed">{session?.user?.name}님 환영합니다!</Text>
+            {/* 💡 로그아웃 버튼 */}
+            <Button
+              variant="subtle"
+              color="red"
+              size="sm"
+              leftSection={<LogOut size={16} />}
+              onClick={() => signOut({ callbackUrl: '/login' })}
+            >
+              로그아웃
+            </Button>
+          </Group>
+        </Group>
 
         <Grid gutter="xl">
           <Grid.Col span={{ base: 12, md: 8 }}>
@@ -332,17 +369,55 @@ export default function LobbyScreen() {
                       {editingDeckId ? '현재 덱 업데이트' : '새 마이덱으로 저장'}
                   </Button>
 
-                  {/* 현재 화면의 덱으로 게임 시작 버튼 */}
-                  <Button 
-                    fullWidth size="lg" radius="md" 
-                    color={deck.length === 20 ? 'teal.5' : 'dark.4'} 
-                    onClick={handleStartGame} 
-                    disabled={deck.length < 20 || isMatching} 
+                  <Divider label="게임 시작" labelPosition="center" my={4} />
+
+                  {/* 💡 친선전 방 코드 입력 */}
+                  <TextInput
+                    placeholder="친구에게 방 코드를 알려주세요"
+                    label="친선전 방 코드"
+                    value={roomCode}
+                    onChange={(e) => setRoomCode(e.currentTarget.value)}
+                    size="sm"
+                    disabled={deck.length < 20 || isMatching}
+                  />
+                  {/* 친선전 입장 버튼 */}
+                  <Button
+                    fullWidth size="md" radius="md"
+                    color={deck.length === 20 && roomCode.trim() ? 'violet.5' : 'dark.4'}
+                    disabled={deck.length < 20 || !roomCode.trim() || isMatching}
                     loading={isMatching}
-                    style={{ transition: 'all 0.3s ease', boxShadow: deck.length === 20 ? '0 0 15px rgba(32, 201, 151, 0.5)' : 'none' }}
+                    onClick={() => {
+                      if (!socket) return;
+                      SoundEngine.play('ui_turn_ready');
+                      setIsMatching(true);
+                      socket.emit('JOIN_CUSTOM_ROOM', { charId: selectedChar, deck, roomCode: roomCode.trim() });
+                    }}
+                    style={{ transition: 'all 0.3s ease' }}
                   >
-                    {isMatching ? 'MATCHING...' : 'START BATTLE'}
+                    🤝 친선전 입장
                   </Button>
+
+                  {/* 💡 매칭 중이면 취소 버튼, 아니면 랭크 게임 시작 버튼 */}
+                  {isMatching ? (
+                    <Button
+                      fullWidth size="lg" radius="md"
+                      color="red.6"
+                      onClick={handleCancelMatch}
+                      style={{ transition: 'all 0.3s ease', animation: 'pulse-red 1.5s infinite' }}
+                    >
+                      ⏳ 매칭 취소 (대기 중...)
+                    </Button>
+                  ) : (
+                    <Button
+                      fullWidth size="lg" radius="md"
+                      color={deck.length === 20 ? 'teal.5' : 'dark.4'}
+                      onClick={handleStartGame}
+                      disabled={deck.length < 20}
+                      style={{ transition: 'all 0.3s ease', boxShadow: deck.length === 20 ? '0 0 15px rgba(32, 201, 151, 0.5)' : 'none' }}
+                    >
+                      ⚔️ 랭크 게임 시작
+                    </Button>
+                  )}
               </Stack>
             </MantineCard>
           </Grid.Col>

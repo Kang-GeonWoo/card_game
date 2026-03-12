@@ -1,118 +1,232 @@
+// src/server/RoomManager.ts
 import { ServerGameEngine } from './GameEngine';
 import { Action, GameState } from '../types';
-import { Server, Socket } from 'socket.io';
+import { Server } from 'socket.io';
 
 export interface RoomState {
     roomId: string;
     engine: ServerGameEngine;
-    playerSockets: string[]; // List of socket IDs in this room
+    playerSockets: string[];    // 소켓 ID 목록
+    playerUserIds: string[];    // 유저 DB ID 목록 (랭크 점수 갱신용)
+    isFriendly: boolean;        // 친선전 여부
     expireTimer: NodeJS.Timeout | null;
 }
 
 export class RoomManager {
     private rooms = new Map<string, RoomState>();
-    private userRoomMap = new Map<string, string>(); // socketId -> roomId
-    private matchQueue: { socketId: string, deck: string[], charId: string }[] = [];
-    private io: Server;
+    private userRoomMap = new Map<string, string>();   // socketId → roomId
 
-    constructor(io: Server) {
+    // 💡 랭크 매칭 대기열 (점수 + 입장시간 포함)
+    private matchQueue: {
+        socketId: string;
+        deck: string[];
+        charId: string;
+        rank: number;
+        userId: string;
+        joinedAt: number;
+    }[] = [];
+
+    // 💡 친선전 대기열 (방 코드 → 플레이어 목록)
+    private customRooms = new Map<string, any[]>();
+
+    private io: Server;
+    private prisma: any; // 생성자에서 주입받음
+
+    constructor(io: Server, prisma?: any) {
         this.io = io;
+        this.prisma = prisma;
+        // 💡 5초마다 랭크 매칭 시도 (대기시간이 길수록 범위 확대)
+        setInterval(() => this.processRankMatch(), 5000);
     }
 
-    public joinMatchQueue(socketId: string, deck: string[], charId: string) {
-        console.log(`[RoomManager] joinMatchQueue 호출됨. (Socket: ${socketId}, Char: ${charId})`);
-        
-        // 이미 큐에 있거나 룸에 있으면 무시
-        if (this.matchQueue.find(q => q.socketId === socketId)) {
-            console.log(`[RoomManager] 실패: 이미 큐에 대기 중입니다. (${socketId})`);
+    // ────────────────────────────────────────────
+    //  💡 랭크 매칭 큐 등록
+    // ────────────────────────────────────────────
+    public joinMatchQueue(
+        socketId: string,
+        deck: string[],
+        charId: string,
+        rank: number,
+        userId: string
+    ) {
+        console.log(`[RoomManager] joinMatchQueue: ${socketId} / rank:${rank}`);
+
+        // 이미 큐에 있거나 방에 있으면 무시
+        if (this.matchQueue.some(q => q.socketId === socketId)) {
+            console.log(`[RoomManager] 이미 큐에 있습니다: ${socketId}`);
             return;
         }
         if (this.userRoomMap.has(socketId)) {
-            console.log(`[RoomManager] 실패: 이미 방에 접속되어 있습니다. (${socketId})`);
+            console.log(`[RoomManager] 이미 방에 있습니다: ${socketId}`);
             return;
         }
 
-        this.matchQueue.push({ socketId, deck, charId });
-        console.log(`[RoomManager] 대기열 등록 완료. 현재 큐 인원: ${this.matchQueue.length}명`);
-
-        this.processQueue();
+        this.matchQueue.push({ socketId, deck, charId, rank, userId, joinedAt: Date.now() });
+        this.io.to(socketId).emit('MATCH_STATUS', '매칭 대기 중...');
+        console.log(`[RoomManager] 대기열 등록 완료. 현재 큐: ${this.matchQueue.length}명`);
     }
 
-    private processQueue() {
-        if (this.matchQueue.length >= 2) {
-            const p1 = this.matchQueue.shift()!;
-            const p2 = this.matchQueue.shift()!;
-            
-            const roomId = this.generateRoomId();
-            this.createRoom(roomId, [p1.socketId, p2.socketId], p1, p2);
+    // 💡 [매칭 취소] 랭크 큐 및 친선전 대기열에서 소켓 제거
+    public cancelMatch(socketId: string) {
+        // 랭크 매칭 큐에서 제거
+        const qIdx = this.matchQueue.findIndex(q => q.socketId === socketId);
+        if (qIdx !== -1) {
+            this.matchQueue.splice(qIdx, 1);
+            console.log(`[MatchCancel] ${socketId} 랭크 큐 이탈. 남은 인원: ${this.matchQueue.length}명`);
+        }
+
+        // 친선전 대기열에서도 제거 (forEach는 Map 내장 메서드라 에러 없음)
+        this.customRooms.forEach((players, code) => {
+            const filtered = players.filter((p: any) => p.socketId !== socketId);
+            if (filtered.length === 0) this.customRooms.delete(code);
+            else this.customRooms.set(code, filtered);
+        });
+    }
+
+    // 💡 [랭크 매칭 처리] 5초마다 호출, 대기시간이 길수록 허용 점수 차이 확대
+    private processRankMatch() {
+        if (this.matchQueue.length < 2) return;
+
+        for (let i = 0; i < this.matchQueue.length; i++) {
+            for (let j = i + 1; j < this.matchQueue.length; j++) {
+                const p1 = this.matchQueue[i];
+                const p2 = this.matchQueue[j];
+
+                // 대기 시간(초)에 따라 허용 점수 차이 계산 (1초당 10점 확대, 최대 500점)
+                const waitSec = (Date.now() - p1.joinedAt) / 1000;
+                const allowedDiff = Math.min(100 + waitSec * 10, 500);
+
+                if (Math.abs(p1.rank - p2.rank) <= allowedDiff) {
+                    // 큐에서 두 플레이어 제거 후 배틀 시작
+                    this.matchQueue.splice(j, 1);
+                    this.matchQueue.splice(i, 1);
+                    console.log(`[RoomManager] 랭크 매칭 성공! ${p1.socketId} vs ${p2.socketId}`);
+                    this.startBattle(p1, p2, false);
+                    return;
+                }
+            }
         }
     }
 
-    public createRoom(roomId: string, socketIds: string[], p1Info?: any, p2Info?: any) {
+    // ────────────────────────────────────────────
+    //  💡 친선전 방 입장/매칭
+    // ────────────────────────────────────────────
+    public joinCustomRoom(
+        socketId: string,
+        deck: string[],
+        charId: string,
+        roomCode: string,
+        userId: string
+    ) {
+        let players = this.customRooms.get(roomCode) || [];
+        players.push({ socketId, deck, charId, userId, rank: 1000 });
+
+        if (players.length >= 2) {
+            // 2명이 모이면 즉시 배틀 시작
+            const p1 = players[0];
+            const p2 = players[1];
+            this.customRooms.delete(roomCode);
+            console.log(`[RoomManager] 친선전 매칭! 코드:${roomCode}, ${p1.socketId} vs ${p2.socketId}`);
+            this.startBattle(p1, p2, true);
+        } else {
+            // 첫 번째 플레이어는 대기
+            this.customRooms.set(roomCode, players);
+            this.io.to(socketId).emit('MATCH_STATUS', `친선전 대기 중... (방 코드: ${roomCode})`);
+            console.log(`[RoomManager] 친선전 대기 중. 코드: ${roomCode}`);
+        }
+    }
+
+    // ────────────────────────────────────────────
+    //  배틀 시작 (랭크/친선 공통)
+    // ────────────────────────────────────────────
+    private startBattle(p1: any, p2: any, isFriendly: boolean) {
+        const roomId = this.generateRoomId();
         const engine = new ServerGameEngine();
-        
+
+        engine.initPlayer(p1.socketId, p1.charId, p1.deck, 0, 2);
+        engine.initPlayer(p2.socketId, p2.charId, p2.deck, 2, 0);
+        engine.startGame();
+
         this.rooms.set(roomId, {
             roomId,
             engine,
-            playerSockets: socketIds,
-            expireTimer: null
+            playerSockets: [p1.socketId, p2.socketId],
+            playerUserIds: [p1.userId, p2.userId],
+            isFriendly,
+            expireTimer: null,
         });
 
-        // Set mapping
-        socketIds.forEach(id => {
-            this.userRoomMap.set(id, roomId);
+        [p1.socketId, p2.socketId].forEach(sid => {
+            this.userRoomMap.set(sid, roomId);
         });
 
-        console.log(`[RoomManager] Room created: ${roomId} with players:`, socketIds);
-
-        // Notify players that match is found
-        if (p1Info && p2Info) {
-            // 엔진에 유저 초기 세팅 (drawPile, hand 분배는 서버에서 확정)
-            engine.initPlayer(p1Info.socketId, p1Info.charId, p1Info.deck, 0, 2);
-            engine.initPlayer(p2Info.socketId, p2Info.charId, p2Info.deck, 2, 0);
-            
-            engine.startGame(); // planning 상태로 전환
-
-            // MATCH_FOUND 브로드캐스트
-            const initialState = engine.getState();
-            this.io.to(p1Info.socketId).emit('MATCH_FOUND', { roomId, state: initialState, myId: p1Info.socketId });
-            this.io.to(p2Info.socketId).emit('MATCH_FOUND', { roomId, state: initialState, myId: p2Info.socketId });
-        }
+        const initialState = engine.getState();
+        this.io.to(p1.socketId).emit('MATCH_FOUND', { roomId, state: initialState, myId: p1.socketId });
+        this.io.to(p2.socketId).emit('MATCH_FOUND', { roomId, state: initialState, myId: p2.socketId });
+        console.log(`[RoomManager] 배틀 시작! Room:${roomId} / 친선전: ${isFriendly}`);
     }
 
+    // ────────────────────────────────────────────
+    //  액션 처리
+    // ────────────────────────────────────────────
     public getRoomBySocketId(socketId: string): RoomState | undefined {
         const roomId = this.userRoomMap.get(socketId);
-        if (roomId) {
-            return this.rooms.get(roomId);
-        }
-        return undefined;
+        return roomId ? this.rooms.get(roomId) : undefined;
     }
 
-    // ============================================
-    // 액션 버퍼 및 동기화 루프 이식 (Step 2)
-    // ============================================
     public handleActionSubmit(socketId: string, actionQueue: Action[]) {
         const room = this.getRoomBySocketId(socketId);
         if (!room) return;
 
-        console.log(`[RoomManager] User ${socketId} submitted actions for room ${room.roomId}.`);
         const engine = room.engine;
-        
-        // 1. 유저의 액션을 엔진 버퍼에 등록
         engine.setAction(socketId, actionQueue);
 
-        // 2. 양쪽 모두 제출 완료 상태인지 체크 (Simultaneous Resolution)
         if (engine.isBothReady()) {
-            console.log(`[RoomManager] Both players ready in room ${room.roomId}. Triggering resolution.`);
-            
-            // 3. 서버 엔진에서 다음 턴 결과 계산
+            console.log(`[RoomManager] 양쪽 액션 제출 완료. Room:${room.roomId}`);
             const snapshots = engine.resolveTurnFull();
-            console.log(`[RoomManager] resolveTurnFull 처리 완료. 생성된 스냅샷 수: ${snapshots?.length}`);
 
-            // 4. 연산된 애니메이션 스냅샷 배열을 각각의 플레이어에게 직접 전송
             room.playerSockets.forEach(sid => {
                 this.io.to(sid).emit('TURN_RESULT', { snapshots });
             });
+
+            // 💡 게임 종료 체크 및 랭크 점수 반영
+            const finalState = engine.getState();
+            if (finalState.status === 'game_over') {
+                this.applyRankResult(room, finalState);
+            }
+        }
+    }
+
+    // 💡 [랭크 점수 처리] 승자 +20점, 패자 -20점 (친선전은 제외)
+    private async applyRankResult(room: RoomState, state: GameState) {
+        if (room.isFriendly || !this.prisma) return;
+
+        try {
+            const [p1SocketId, p2SocketId] = room.playerSockets;
+            const [p1UserId, p2UserId] = room.playerUserIds;
+            const p1State = state.players[p1SocketId];
+            const p2State = state.players[p2SocketId];
+
+            if (!p1State || !p2State) return;
+
+            // HP가 더 높은 쪽이 승자
+            const p1Won = p1State.hp > p2State.hp;
+            const RANK_CHANGE = 20;
+
+            await Promise.all([
+                this.prisma.user.update({
+                    where: { id: p1UserId },
+                    data: { rankScore: { increment: p1Won ? RANK_CHANGE : -RANK_CHANGE } }
+                }),
+                this.prisma.user.update({
+                    where: { id: p2UserId },
+                    data: { rankScore: { increment: p1Won ? -RANK_CHANGE : RANK_CHANGE } }
+                }),
+            ]);
+
+            console.log(`[Rank] ${p1UserId} ${p1Won ? '+' : '-'}${RANK_CHANGE}, ${p2UserId} ${p1Won ? '-' : '+'}${RANK_CHANGE}`);
+        } catch (err) {
+            console.error('[Rank] 점수 갱신 실패:', err);
         }
     }
 
@@ -122,99 +236,68 @@ export class RoomManager {
 
         const success = room.engine.discardCard(socketId, cardInstanceId);
         if (success) {
-            console.log(`[RoomManager] User ${socketId} discarded card. Broadcasting STATE_SYNC.`);
-            // 새로 갱신된 상태(또는 턴이 넘어간 상태)를 방 전체에 동기화
             room.playerSockets.forEach(sid => {
                 this.io.to(sid).emit('STATE_SYNC', { state: room.engine.getState() });
             });
         }
     }
 
-    // ============================================
-    // 연결 관리
-    // ============================================
-    public handleDisconnect(socketId: string) {
-        const room = this.getRoomBySocketId(socketId);
-        if (room) {
-            console.log(`[RoomManager] User ${socketId} disconnected from room ${room.roomId}. Setting expiry timer (30s).`);
-            
-            // Set 30s timeout to clear room to prevent memory leaks if they don't reconnect
-            if (!room.expireTimer) {
-                room.expireTimer = setTimeout(() => {
-                    this.destroyRoom(room.roomId);
-                }, 30000);
-            }
-        }
-    }
-
-    public handleReconnect(socketId: string, oldSocketId: string) {
-        const roomId = this.userRoomMap.get(oldSocketId);
-        if (roomId) {
-            const room = this.rooms.get(roomId);
-            if (room) {
-                // Clear the expiry timer
-                if (room.expireTimer) {
-                    clearTimeout(room.expireTimer);
-                    room.expireTimer = null;
-                }
-
-                // Update mapping
-                this.userRoomMap.delete(oldSocketId);
-                this.userRoomMap.set(socketId, roomId);
-
-                // Update socket references within the room
-                const idx = room.playerSockets.indexOf(oldSocketId);
-                if (idx !== -1) {
-                    room.playerSockets[idx] = socketId;
-                }
-
-                // Update engine internal state keys
-                room.engine.replacePlayerId(oldSocketId, socketId);
-
-                console.log(`[RoomManager] User reconnected to room ${roomId}. Old Socket: ${oldSocketId}, New Socket: ${socketId}`);
-            }
-        }
-    }
-
-    // ============================================
-    // 세션 클린업 및 방 나가기 (Step 1 추가)
-    // ============================================
+    // ────────────────────────────────────────────
+    //  연결 관리 / 클린업
+    // ────────────────────────────────────────────
     public leaveRoom(socketId: string) {
         const roomId = this.userRoomMap.get(socketId);
         if (roomId) {
             const room = this.rooms.get(roomId);
             if (room) {
-                // 방의 플레이어 목록에서 해당 유저 제거
                 room.playerSockets = room.playerSockets.filter(id => id !== socketId);
-                
-                // 엔진 내부의 플레이어 정보도 초기화(옵션)하거나 방 자체를 파괴할 수도 있음
-                // 지금은 1v1 게임이므로 한 명이 나가면 방 자체를 파기하는 것이 안전
                 this.destroyRoom(roomId);
             }
             this.userRoomMap.delete(socketId);
-            console.log(`[RoomManager] User ${socketId} explicitly left room ${roomId}.`);
+            console.log(`[RoomManager] ${socketId} 방 나감. Room:${roomId}`);
         }
-        
-        // 매칭 큐에 있었다면 큐에서도 제거
+
+        // 매칭 큐에서도 제거
         const qIdx = this.matchQueue.findIndex(q => q.socketId === socketId);
         if (qIdx !== -1) {
             this.matchQueue.splice(qIdx, 1);
-            console.log(`[RoomManager] User ${socketId} removed from match queue.`);
+            console.log(`[RoomManager] ${socketId} 매칭 큐에서 제거됨`);
         }
+
+        // 💡 친선전 대기 중이었다면 제거 (Array.from으로 MapIterator 오류 방지)
+        Array.from(this.customRooms.entries()).forEach(([code, players]: [string, any[]]) => {
+            const filtered = players.filter((p: any) => p.socketId !== socketId);
+            if (filtered.length === 0) this.customRooms.delete(code);
+            else this.customRooms.set(code, filtered);
+        });
     }
 
     public destroyRoom(roomId: string) {
         const room = this.rooms.get(roomId);
         if (room) {
-            if (room.expireTimer) {
-                clearTimeout(room.expireTimer);
-            }
-            room.playerSockets.forEach(id => {
-                this.userRoomMap.delete(id);
-            });
+            if (room.expireTimer) clearTimeout(room.expireTimer);
+            room.playerSockets.forEach(id => this.userRoomMap.delete(id));
             this.rooms.delete(roomId);
-            console.log(`[RoomManager] Room destroyed and memory cleared: ${roomId}`);
+            console.log(`[RoomManager] Room 파기: ${roomId}`);
         }
+    }
+
+    public handleReconnect(socketId: string, oldSocketId: string) {
+        const roomId = this.userRoomMap.get(oldSocketId);
+        if (!roomId) return;
+        const room = this.rooms.get(roomId);
+        if (!room) return;
+
+        if (room.expireTimer) { clearTimeout(room.expireTimer); room.expireTimer = null; }
+
+        this.userRoomMap.delete(oldSocketId);
+        this.userRoomMap.set(socketId, roomId);
+
+        const idx = room.playerSockets.indexOf(oldSocketId);
+        if (idx !== -1) room.playerSockets[idx] = socketId;
+
+        room.engine.replacePlayerId(oldSocketId, socketId);
+        console.log(`[RoomManager] 재접속. Old:${oldSocketId} → New:${socketId}`);
     }
 
     public generateRoomId(): string {

@@ -31,6 +31,8 @@ interface FieldBoardProps {
     status?: string;
     p1ResolvingSteps?: number[];
     p2ResolvingSteps?: number[];
+    // 💡 1턴 한정 '나' 표시를 위한 현재 턴 카운트
+    turnCount?: number;
 }
 
 export function FieldBoard({
@@ -39,7 +41,8 @@ export function FieldBoard({
     visualEffects = [], isP1Turn = false, isP2Turn = false,
     p1Statuses = [], p2Statuses = [], removeVisualEffect = () => { },
     p1CharId = 'warrior', p2CharId = 'warrior', p1Hp, p2Hp, resolvingStep, p1Action, p2Action, status,
-    p1ResolvingSteps = [0, 2, 4], p2ResolvingSteps = [1, 3, 5]
+    p1ResolvingSteps = [0, 2, 4], p2ResolvingSteps = [1, 3, 5],
+    turnCount = 0  // 💡 1턴일 때만 '나' 표시 (0이면 보이지 않음)
 }: FieldBoardProps) {
     const GRID_SIZE = 3;
 
@@ -84,9 +87,53 @@ export function FieldBoard({
                         )}
 
 
-                        {isP1 && <CharacterSprite charId={p1CharId} animation={getAnimationState(true)} glowColor="rgba(100, 180, 255, 0.7)" />}
+                        {/* 💡 1턴 한정 '나▼' 표시 + 황금 테두리 없이 스프라이트만 대력 렌더링 */}
+                        {isP1 && (
+                            <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', zIndex: 6 }}>
+                                {/* 💡 1턴 계획 단계(status=planning, turnCount=1)에서만 '나 ▼' 표시 */}
+                                {status === 'planning' && turnCount === 1 && (
+                                    <motion.div
+                                        initial={{ y: 0, opacity: 0 }}
+                                        animate={{ y: -65, opacity: 1 }}
+                                        transition={{ duration: 0.4, ease: 'easeOut' }}
+                                        style={{
+                                            position: 'absolute',
+                                            backgroundColor: '#E6C36A',
+                                            color: '#000',
+                                            padding: '2px 10px',
+                                            borderRadius: '6px',
+                                            fontWeight: 900,
+                                            fontSize: '16px',
+                                            border: '2px solid #fff',
+                                            boxShadow: '0 0 15px gold',
+                                            zIndex: 100,
+                                            whiteSpace: 'nowrap',
+                                            pointerEvents: 'none',
+                                        }}
+                                    >
+                                        나 ▼
+                                    </motion.div>
+                                )}
+                                {/* 🔴 황금 테두리 div 제거 - 스프라이트만 렌더링 */}
+                                <CharacterSprite charId={p1CharId} animation={getAnimationState(true)} />
+                            </div>
+                        )}
                         {isVirtualP1 && <CharacterSprite charId={p1CharId} animation="idle" ghostMode />}
-                        {isP2 && <CharacterSprite charId={p2CharId} animation={getAnimationState(false)} glowColor="rgba(255, 120, 120, 0.7)" />}
+                        {/* 상대방(P2) 붉은 테두리 */}
+                        {isP2 && (
+                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 6 }}>
+                                <div style={{
+                                    position: 'absolute',
+                                    inset: '-10px',
+                                    border: '2px solid rgba(255,80,80,0.7)',
+                                    borderRadius: '50%',
+                                    boxShadow: '0 0 10px rgba(255,80,80,0.4)',
+                                    pointerEvents: 'none',
+                                    zIndex: 1,
+                                }} />
+                                <CharacterSprite charId={p2CharId} animation={getAnimationState(false)} glowColor="rgba(255, 120, 120, 0.7)" />
+                            </div>
+                        )}
 
                         <div style={{ position: 'absolute', bottom: 4, right: 6, fontSize: '10px', color: '#555', zIndex: 70 }}>{x},{y}</div>
 
