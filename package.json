@@ -23,6 +23,8 @@
     "next": "15.1.7",
     "next-auth": "^4.24.11",
     "pg": "^8.13.3",
+    "postcss-preset-mantine": "^1.18.0",
+    "postcss-simple-vars": "^7.0.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "socket.io": "^4.8.1",
