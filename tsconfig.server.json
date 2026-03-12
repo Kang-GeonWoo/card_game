@@ -2,11 +2,19 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "module": "CommonJS",
+    "moduleResolution": "node",
     "outDir": "./dist",
     "rootDir": "./src",
     "lib": ["esnext"],
-    "types": ["node"]
+    "types": ["node"],
+    "noEmit": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true
   },
-  "include": ["src/server/**/*.ts", "src/types/**/*.ts", "src/engine/dataLoader.ts"],
+  "include": [
+    "src/server/**/*.ts", 
+    "src/types/**/*.ts", 
+    "src/engine/dataLoader.ts"
+  ],
   "exclude": ["node_modules"]
 }
